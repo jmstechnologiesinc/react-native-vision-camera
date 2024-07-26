@@ -31,9 +31,7 @@
   NSLog(@"Successfully registered Frame Processor Plugin \"%@\"!", name);
 }
 
-+ (FrameProcessorPlugin*)getPlugin:(NSString* _Nonnull)name
-                         withProxy:(VisionCameraProxyHolder* _Nonnull)proxy
-                       withOptions:(NSDictionary* _Nullable)options {
++ (FrameProcessorPlugin*)getPlugin:(NSString* _Nonnull)name withOptions:(NSDictionary* _Nullable)options {
   NSLog(@"Looking up Frame Processor Plugin \"%@\"...", name);
   PluginInitializerFunction initializer = [[FrameProcessorPluginRegistry frameProcessorPlugins] objectForKey:name];
   if (initializer == nil) {
@@ -42,7 +40,7 @@
   }
 
   NSLog(@"Frame Processor Plugin \"%@\" found! Initializing...", name);
-  return initializer(proxy, options);
+  return initializer(options);
 }
 
 @end

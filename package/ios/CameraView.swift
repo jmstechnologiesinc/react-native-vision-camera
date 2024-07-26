@@ -84,7 +84,6 @@ public final class CameraView: UIView, CameraSessionDelegate {
   // CameraView+Zoom
   var pinchGestureRecognizer: UIPinchGestureRecognizer?
   var pinchScaleOffset: CGFloat = 1.0
-  private var currentConfigureCall: DispatchTime?
 
   var previewView: PreviewView
   #if DEBUG
@@ -151,18 +150,8 @@ public final class CameraView: UIView, CameraSessionDelegate {
   // pragma MARK: Props updating
   override public final func didSetProps(_ changedProps: [String]!) {
     ReactLogger.log(level: .info, message: "Updating \(changedProps.count) props: [\(changedProps.joined(separator: ", "))]")
-    let now = DispatchTime.now()
-    currentConfigureCall = now
 
-    cameraSession.configure { [self] config in
-      // Check if we're still the latest call to configure { ... }
-      guard currentConfigureCall == now else {
-        // configure waits for a lock, and if a new call to update() happens in the meantime we can drop this one.
-        // this works similar to how React implemented concurrent rendering, the newer call to update() has higher priority.
-        ReactLogger.log(level: .info, message: "A new configure { ... } call arrived, aborting this one...")
-        return
-      }
-
+    cameraSession.configure { config in
       // Input Camera Device
       config.cameraId = cameraId as? String
 
@@ -250,9 +239,6 @@ public final class CameraView: UIView, CameraSessionDelegate {
         self.setupFpsGraph()
       }
     }
-
-    // Prevent phone from going to sleep
-    UIApplication.shared.isIdleTimerDisabled = isActive
   }
 
   func setupFpsGraph() {

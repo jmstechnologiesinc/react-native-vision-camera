@@ -18,17 +18,11 @@ struct Video {
    Duration of the recorded video (in seconds)
    */
   var duration: Double
-  /**
-   * The size of the video, in pixels.
-   */
-  var size: CGSize
 
   func toJSValue() -> NSDictionary {
     return [
       "path": path,
       "duration": duration,
-      "width": size.width,
-      "height": size.height,
     ]
   }
 }

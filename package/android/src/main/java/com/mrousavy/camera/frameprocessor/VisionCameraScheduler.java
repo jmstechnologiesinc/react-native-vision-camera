@@ -23,6 +23,7 @@ public class VisionCameraScheduler {
     @DoNotStrip
     private void scheduleTrigger() {
         CameraQueues.CameraQueue videoQueue = CameraQueues.Companion.getVideoQueue();
+        // TODO: Make sure post(this::trigger) works.
         videoQueue.getHandler().post(this::trigger);
     }
 }

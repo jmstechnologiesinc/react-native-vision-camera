@@ -34,12 +34,22 @@ using namespace facebook;
   // Call the Frame Processor on the Worklet Runtime
   jsi::Runtime& runtime = _workletContext->getWorkletRuntime();
 
-  // Wrap HostObject as JSI Value
-  auto argument = jsi::Object::createFromHostObject(runtime, frameHostObject);
-  jsi::Value jsValue(std::move(argument));
+  try {
+    // Wrap HostObject as JSI Value
+    auto argument = jsi::Object::createFromHostObject(runtime, frameHostObject);
+    jsi::Value jsValue(std::move(argument));
 
-  // Call the Worklet with the Frame JS Host Object as an argument
-  _workletInvoker->call(runtime, jsi::Value::undefined(), &jsValue, 1);
+    // Call the Worklet with the Frame JS Host Object as an argument
+    _workletInvoker->call(runtime, jsi::Value::undefined(), &jsValue, 1);
+  } catch (jsi::JSError& jsError) {
+    // JS Error occured, print it to console.
+    auto message = jsError.getMessage();
+
+    _workletContext->invokeOnJsThread([message](jsi::Runtime& jsRuntime) {
+      auto logFn = jsRuntime.global().getPropertyAsObject(jsRuntime, "console").getPropertyAsFunction(jsRuntime, "error");
+      logFn.call(jsRuntime, jsi::String::createFromUtf8(jsRuntime, "Frame Processor threw an error: " + message));
+    });
+  }
 }
 
 - (void)call:(Frame* _Nonnull)frame {

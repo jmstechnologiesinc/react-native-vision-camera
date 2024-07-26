@@ -4,11 +4,9 @@ import android.hardware.HardwareBuffer;
 import android.media.Image;
 import android.os.Build;
 import com.facebook.proguard.annotations.DoNotStrip;
-import com.mrousavy.camera.core.FrameInvalidError;
 import com.mrousavy.camera.core.HardwareBuffersNotAvailableError;
 import com.mrousavy.camera.types.PixelFormat;
 import com.mrousavy.camera.types.Orientation;
-import java.lang.IllegalStateException;
 
 public class Frame {
     private final Image image;
@@ -16,6 +14,7 @@ public class Frame {
     private final long timestamp;
     private final Orientation orientation;
     private int refCount = 0;
+    private HardwareBuffer hardwareBuffer = null;
 
     public Frame(Image image, long timestamp, Orientation orientation, boolean isMirrored) {
         this.image = image;
@@ -24,123 +23,115 @@ public class Frame {
         this.isMirrored = isMirrored;
     }
 
-    private void assertIsValid() throws FrameInvalidError {
-        if (!getIsImageValid(image)) {
-            throw new FrameInvalidError();
-        }
-    }
-
-    private synchronized boolean getIsImageValid(Image image) {
-        if (refCount <= 0) return false;
-        try {
-            // will throw an exception if the image is already closed
-            image.getFormat();
-            // no exception thrown, image must still be valid.
-            return true;
-        } catch (IllegalStateException e) {
-            // exception thrown, image has already been closed.
-            return false;
-        }
-    }
-
-    public synchronized Image getImage() {
+    public Image getImage() {
         return image;
     }
 
     @SuppressWarnings("unused")
     @DoNotStrip
-    public synchronized int getWidth() throws FrameInvalidError {
-        assertIsValid();
+    public int getWidth() {
         return image.getWidth();
     }
 
     @SuppressWarnings("unused")
     @DoNotStrip
-    public synchronized int getHeight() throws FrameInvalidError {
-        assertIsValid();
+    public int getHeight() {
         return image.getHeight();
     }
 
     @SuppressWarnings("unused")
     @DoNotStrip
-    public synchronized boolean getIsValid() throws FrameInvalidError {
-        assertIsValid();
-        return getIsImageValid(image);
+    public boolean getIsValid() {
+        try {
+            // will throw an exception if the image is already closed
+            image.getCropRect();
+            // no exception thrown, image must still be valid.
+            return true;
+        } catch (Exception e) {
+            // exception thrown, image has already been closed.
+            return false;
+        }
     }
 
     @SuppressWarnings("unused")
     @DoNotStrip
-    public synchronized boolean getIsMirrored() throws FrameInvalidError {
-        assertIsValid();
+    public boolean getIsMirrored() {
         return isMirrored;
     }
 
     @SuppressWarnings("unused")
     @DoNotStrip
-    public synchronized long getTimestamp() throws FrameInvalidError {
-        assertIsValid();
+    public long getTimestamp() {
         return timestamp;
     }
 
     @SuppressWarnings("unused")
     @DoNotStrip
-    public synchronized Orientation getOrientation() throws FrameInvalidError {
-        assertIsValid();
-        return orientation;
+    public String getOrientation() {
+        return orientation.getUnionValue();
     }
 
     @SuppressWarnings("unused")
     @DoNotStrip
-    public synchronized PixelFormat getPixelFormat() throws FrameInvalidError {
-        assertIsValid();
-        return PixelFormat.Companion.fromImageFormat(image.getFormat());
+    public String getPixelFormat() {
+        PixelFormat format = PixelFormat.Companion.fromImageFormat(image.getFormat());
+        return format.getUnionValue();
     }
 
     @SuppressWarnings("unused")
     @DoNotStrip
-    public synchronized int getPlanesCount() throws FrameInvalidError {
-        assertIsValid();
+    public int getPlanesCount() {
         return image.getPlanes().length;
     }
 
     @SuppressWarnings("unused")
     @DoNotStrip
-    public synchronized int getBytesPerRow() throws FrameInvalidError {
-        assertIsValid();
+    public int getBytesPerRow() {
         return image.getPlanes()[0].getRowStride();
     }
 
     @SuppressWarnings("unused")
     @DoNotStrip
-    private Object getHardwareBufferBoxed() throws HardwareBuffersNotAvailableError, FrameInvalidError {
+    public Object getHardwareBufferBoxed() throws HardwareBuffersNotAvailableError {
         return getHardwareBuffer();
     }
 
-    public synchronized HardwareBuffer getHardwareBuffer() throws HardwareBuffersNotAvailableError, FrameInvalidError {
+    public HardwareBuffer getHardwareBuffer() throws HardwareBuffersNotAvailableError {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.P) {
             throw new HardwareBuffersNotAvailableError();
         }
-        assertIsValid();
-        return image.getHardwareBuffer();
+        if (hardwareBuffer == null) {
+            hardwareBuffer = image.getHardwareBuffer();
+        }
+        return hardwareBuffer;
     }
 
     @SuppressWarnings("unused")
     @DoNotStrip
-    public synchronized void incrementRefCount() {
-        refCount++;
-    }
-
-    @SuppressWarnings("unused")
-    @DoNotStrip
-    public synchronized void decrementRefCount() {
-        refCount--;
-        if (refCount <= 0) {
-            // If no reference is held on this Image, close it.
-            close();
+    public void incrementRefCount() {
+        synchronized (this) {
+            refCount++;
         }
     }
 
-    private synchronized void close() {
+    @SuppressWarnings("unused")
+    @DoNotStrip
+    public void decrementRefCount() {
+        synchronized (this) {
+            refCount--;
+            if (refCount <= 0) {
+                // If no reference is held on this Image, close it.
+                image.close();
+            }
+        }
+    }
+
+    @SuppressWarnings("unused")
+    @DoNotStrip
+    private void close() {
+        if (hardwareBuffer != null) {
+            hardwareBuffer.close();
+        }
         image.close();
     }
 }

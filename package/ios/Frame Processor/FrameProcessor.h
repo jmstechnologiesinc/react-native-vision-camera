@@ -19,11 +19,7 @@
 #import <memory.h>
 #endif
 
-NS_ASSUME_NONNULL_BEGIN
-
 @interface FrameProcessor : NSObject
-
-- (instancetype)init NS_UNAVAILABLE;
 
 #ifdef __cplusplus
 - (instancetype _Nonnull)initWithWorklet:(std::shared_ptr<RNWorklet::JsiWorklet>)worklet
@@ -32,8 +28,6 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)callWithFrameHostObject:(std::shared_ptr<FrameHostObject>)frameHostObject;
 #endif
 
-- (void)call:(Frame*)frame;
+- (void)call:(Frame* _Nonnull)frame;
 
 @end
-
-NS_ASSUME_NONNULL_END

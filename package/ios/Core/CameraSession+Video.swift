@@ -54,8 +54,6 @@ extension CameraSession {
           // Something went wrong, we have an error
           if error.domain == "capture/aborted" {
             onError(.capture(.aborted))
-          } else if error.code == -11807 {
-            onError(.capture(.insufficientStorage))
           } else {
             onError(.capture(.unknown(message: "An unknown recording error occured! \(error.code) \(error.description)")))
           }
@@ -63,8 +61,7 @@ extension CameraSession {
           if status == .completed {
             // Recording was successfully saved
             let video = Video(path: recordingSession.url.absoluteString,
-                              duration: recordingSession.duration,
-                              size: recordingSession.size ?? CGSize.zero)
+                              duration: recordingSession.duration)
             onVideoRecorded(video)
           } else {
             // Recording wasn't saved and we don't have an error either.

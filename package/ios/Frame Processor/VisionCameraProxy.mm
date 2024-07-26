@@ -10,6 +10,7 @@
 #import <Foundation/Foundation.h>
 #import <jsi/jsi.h>
 
+#import "../../cpp/JSITypedArray.h"
 #import "FrameHostObject.h"
 #import "FrameProcessor.h"
 #import "FrameProcessorPluginHostObject.h"
@@ -54,7 +55,10 @@ VisionCameraProxy::VisionCameraProxy(jsi::Runtime& runtime, std::shared_ptr<reac
 }
 
 VisionCameraProxy::~VisionCameraProxy() {
-  NSLog(@"VisionCameraProxy: Destroying VisionCameraProxy...");
+  NSLog(@"VisionCameraProxy: Destroying context...");
+  // Destroy ArrayBuffer cache for both the JS and the Worklet Runtime.
+  vision::invalidateArrayBufferCache(*_workletContext->getJsRuntime());
+  vision::invalidateArrayBufferCache(_workletContext->getWorkletRuntime());
 }
 
 std::vector<jsi::PropNameID> VisionCameraProxy::getPropertyNames(jsi::Runtime& runtime) {
@@ -93,8 +97,7 @@ void VisionCameraProxy::removeFrameProcessor(jsi::Runtime& runtime, int viewTag)
 jsi::Value VisionCameraProxy::initFrameProcessorPlugin(jsi::Runtime& runtime, std::string name, const jsi::Object& options) {
   NSString* key = [NSString stringWithUTF8String:name.c_str()];
   NSDictionary* optionsObjc = JSINSObjectConversion::convertJSIObjectToNSDictionary(runtime, options, _callInvoker);
-  VisionCameraProxyHolder* proxy = [[VisionCameraProxyHolder alloc] initWithProxy:this];
-  FrameProcessorPlugin* plugin = [FrameProcessorPluginRegistry getPlugin:key withProxy:proxy withOptions:optionsObjc];
+  FrameProcessorPlugin* plugin = [FrameProcessorPluginRegistry getPlugin:key withOptions:optionsObjc];
   if (plugin == nil) {
     return jsi::Value::undefined();
   }
@@ -142,25 +145,7 @@ jsi::Value VisionCameraProxy::get(jsi::Runtime& runtime, const jsi::PropNameID& 
   return jsi::Value::undefined();
 }
 
-@implementation VisionCameraProxyHolder {
-  VisionCameraProxy* _proxy;
-}
-
-- (instancetype)initWithProxy:(void*)proxy {
-  if (self = [super init]) {
-    _proxy = (VisionCameraProxy*)proxy;
-  }
-  return self;
-}
-
-- (VisionCameraProxy*)proxy {
-  return _proxy;
-}
-
-@end
-
 @implementation VisionCameraInstaller
-
 + (BOOL)installToBridge:(RCTBridge* _Nonnull)bridge {
   RCTCxxBridge* cxxBridge = (RCTCxxBridge*)[RCTBridge currentBridge];
   if (!cxxBridge.runtime) {
@@ -175,5 +160,4 @@ jsi::Value VisionCameraProxy::get(jsi::Runtime& runtime, const jsi::PropNameID& 
 
   return YES;
 }
-
 @end

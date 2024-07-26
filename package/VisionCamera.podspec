@@ -54,7 +54,6 @@ Pod::Spec.new do |s|
     hasWorklets ? "ios/Frame Processor/FrameProcessor.h" : "",
     hasWorklets ? "ios/Frame Processor/FrameProcessorPlugin.h" : "",
     hasWorklets ? "ios/Frame Processor/FrameProcessorPluginRegistry.h" : "",
-    hasWorklets ? "ios/Frame Processor/SharedArray.h" : "",
     hasWorklets ? "ios/Frame Processor/VisionCameraProxy.h" : "",
     hasWorklets ? "cpp/**/*.{cpp}" : "",
   ]
@@ -69,7 +68,6 @@ Pod::Spec.new do |s|
   s.dependency "React"
   s.dependency "React-Core"
   s.dependency "React-callinvoker"
-  s.dependency "ReactCommon" 
 
   if hasWorklets
     s.dependency "react-native-worklets-core"

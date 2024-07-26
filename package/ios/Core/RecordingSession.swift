@@ -53,13 +53,6 @@ class RecordingSession {
   }
 
   /**
-   Gets the size of the recorded video, in pixels.
-   */
-  var size: CGSize? {
-    return videoWriter?.naturalSize
-  }
-
-  /**
    Get the duration (in seconds) of the recorded video.
    */
   var duration: Double {

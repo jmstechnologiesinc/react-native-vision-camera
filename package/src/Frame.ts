@@ -18,48 +18,46 @@ export interface Frame {
    * Whether the underlying buffer is still valid or not.
    * A Frame is valid as long as your Frame Processor (or a `runAsync(..)` operation) is still running
    */
-  readonly isValid: boolean
+  isValid: boolean
   /**
    * Returns the width of the frame, in pixels.
    */
-  readonly width: number
+  width: number
   /**
    * Returns the height of the frame, in pixels.
    */
-  readonly height: number
+  height: number
   /**
    * Returns the amount of bytes per row.
    */
-  readonly bytesPerRow: number
+  bytesPerRow: number
   /**
    * Returns the number of planes this frame contains.
    */
-  readonly planesCount: number
+  planesCount: number
   /**
    * Returns whether the Frame is mirrored (selfie camera) or not.
    */
-  readonly isMirrored: boolean
+  isMirrored: boolean
   /**
    * Returns the timestamp of the Frame relative to the host sytem's clock.
    */
-  readonly timestamp: number
+  timestamp: number
   /**
    * Represents the orientation of the Frame.
    *
    * Some ML Models are trained for specific orientations, so they need to be taken into
    * consideration when running a frame processor. See also: {@linkcode isMirrored}
    */
-  readonly orientation: Orientation
+  orientation: Orientation
   /**
    * Represents the pixel-format of the Frame.
    */
-  readonly pixelFormat: PixelFormat
+  pixelFormat: PixelFormat
 
   /**
    * Get the underlying data of the Frame as a uint8 array buffer.
-   *
    * The format of the buffer depends on the Frame's {@linkcode pixelFormat}.
-   * This function might fail if the {@linkcode pixelFormat} is `private`.
    *
    * Note that Frames are allocated on the GPU, so calling `toArrayBuffer()` will copy from the GPU to the CPU.
    *
@@ -69,14 +67,13 @@ export interface Frame {
    *   'worklet'
    *
    *   if (frame.pixelFormat === 'rgb') {
-   *     const buffer = frame.toArrayBuffer()
-   *     const data = new Uint8Array(buffer)
+   *     const data = frame.toArrayBuffer()
    *     console.log(`Pixel at 0,0: RGB(${data[0]}, ${data[1]}, ${data[2]})`)
    *   }
    * }, [])
    * ```
    */
-  toArrayBuffer(): ArrayBuffer
+  toArrayBuffer(): Uint8Array
   /**
    * Returns a string representation of the frame.
    * @example

@@ -11,7 +11,7 @@ import type { RecordVideoOptions, VideoFile } from './VideoFile'
 import { VisionCameraProxy } from './FrameProcessorPlugins'
 import { CameraDevices } from './CameraDevices'
 import type { EmitterSubscription } from 'react-native'
-import type { Code, CodeScanner, CodeScannerFrame } from './CodeScanner'
+import { Code, CodeScanner, CodeScannerFrame } from './CodeScanner'
 
 //#region Types
 export type CameraPermissionStatus = 'granted' | 'not-determined' | 'denied' | 'restricted'
@@ -345,18 +345,30 @@ export class Camera extends React.PureComponent<CameraProps, CameraState> {
    * the user has permitted the app to use the camera.
    *
    * To actually prompt the user for camera permission, use {@linkcode Camera.requestCameraPermission | requestCameraPermission()}.
+   *
+   * @throws {@linkcode CameraRuntimeError} When any kind of error occured while getting the current permission status. Use the {@linkcode CameraRuntimeError.code | code} property to get the actual error
    */
-  public static getCameraPermissionStatus(): CameraPermissionStatus {
-    return CameraModule.getCameraPermissionStatus()
+  public static async getCameraPermissionStatus(): Promise<CameraPermissionStatus> {
+    try {
+      return await CameraModule.getCameraPermissionStatus()
+    } catch (e) {
+      throw tryParseNativeCameraError(e)
+    }
   }
   /**
    * Gets the current Microphone-Recording Permission Status. Check this before mounting the Camera to ensure
    * the user has permitted the app to use the microphone.
    *
    * To actually prompt the user for microphone permission, use {@linkcode Camera.requestMicrophonePermission | requestMicrophonePermission()}.
+   *
+   * @throws {@linkcode CameraRuntimeError} When any kind of error occured while getting the current permission status. Use the {@linkcode CameraRuntimeError.code | code} property to get the actual error
    */
-  public static getMicrophonePermissionStatus(): CameraPermissionStatus {
-    return CameraModule.getMicrophonePermissionStatus()
+  public static async getMicrophonePermissionStatus(): Promise<CameraPermissionStatus> {
+    try {
+      return await CameraModule.getMicrophonePermissionStatus()
+    } catch (e) {
+      throw tryParseNativeCameraError(e)
+    }
   }
   /**
    * Shows a "request permission" alert to the user, and resolves with the new camera permission status.
@@ -464,14 +476,12 @@ export class Camera extends React.PureComponent<CameraProps, CameraState> {
 
     // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
     if (device == null) {
-      throw new CameraRuntimeError(
-        'device/no-device',
+      throw new Error(
         'Camera: `device` is null! Select a valid Camera device. See: https://mrousavy.com/react-native-vision-camera/docs/guides/devices',
       )
     }
 
     const shouldEnableBufferCompression = props.video === true && frameProcessor == null
-    const pixelFormat = props.pixelFormat ?? (frameProcessor != null ? 'yuv' : 'native')
     const torch = this.state.isRecordingWithFlash ? 'on' : props.torch
 
     return (
@@ -489,7 +499,6 @@ export class Camera extends React.PureComponent<CameraProps, CameraState> {
         codeScannerOptions={codeScanner}
         enableFrameProcessor={frameProcessor != null}
         enableBufferCompression={props.enableBufferCompression ?? shouldEnableBufferCompression}
-        pixelFormat={pixelFormat}
       />
     )
   }
